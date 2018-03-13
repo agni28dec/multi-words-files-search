@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<!-- springProfile name="dev"> <appender name="ROLLING-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender"> 
+		<encoder> <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n 
+		</pattern> </encoder> <file>D:/var/cts/file/search/log/MultiWordsFilesSearch/multiwordsfilessearch.log</file> 
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy"> 
+		<fileNamePattern>D:/var/cts/file/search/log/MultiWordsFilesSearch/multiwordsfilessearch.%d{yyyy-MM-dd}.log 
+		</fileNamePattern> </rollingPolicy> </appender> <root level="INFO"> <appender-ref 
+		ref="ROLLING-FILE" /> </root> </springProfile -->
+
+	<springProfile name="dev">
+		<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+			<layout class="ch.qos.logback.classic.PatternLayout">
+				<Pattern>
+					%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} -
+					%msg%n
+				</Pattern>
+			</layout>
+		</appender>
+		<root level="INFO">
+			<appender-ref ref="STDOUT" />
+		</root>
+	</springProfile>
+
+	<springProfile name="prod">
+		<appender name="ROLLING-FILE"
+			class="ch.qos.logback.core.rolling.RollingFileAppender">
+			<encoder>
+				<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+				</pattern>
+			</encoder>
+			<file>/var/cts/file/search/log/MultiWordsFilesSearch/multiwordsfilessearch.log
+			</file>
+			<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+				<fileNamePattern>/var/cts/file/search/log/MultiWordsFilesSearch/multiwordsfilessearch.log.%d{yyyy-MM-dd}.%i.gz
+				</fileNamePattern>
+				<timeBasedFileNamingAndTriggeringPolicy
+					class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+					<maxFileSize>500MB</maxFileSize>
+				</timeBasedFileNamingAndTriggeringPolicy>
+			</rollingPolicy>
+		</appender>
+
+		<root level="INFO">
+			<appender-ref ref="ROLLING-FILE" />
+		</root>
+	</springProfile>
+
+	<springProfile name="uat">
+		<appender name="ROLLING-FILE"
+			class="ch.qos.logback.core.rolling.RollingFileAppender">
+			<encoder>
+				<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+				</pattern>
+			</encoder>
+			<file>/var/cts/file/search/log/MultiWordsFilesSearch/multiwordsfilessearch.log
+			</file>
+			<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+				<fileNamePattern>/var/cts/file/search/log/MultiWordsFilesSearch/multiwordsfilessearch.log.%d{yyyy-MM-dd}.%i.gz
+				</fileNamePattern>
+				<timeBasedFileNamingAndTriggeringPolicy
+					class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+					<maxFileSize>500MB</maxFileSize>
+				</timeBasedFileNamingAndTriggeringPolicy>
+			</rollingPolicy>
+		</appender>
+
+		<root level="INFO">
+			<appender-ref ref="ROLLING-FILE" />
+		</root>
+	</springProfile>
+
+</configuration>
