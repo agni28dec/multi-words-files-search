@@ -1,70 +1,97 @@
 package com.cts.file.search.controller;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Set;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cts.file.search.model.FilesSearchList;
+import com.cts.file.search.exception.MultiWordsFilesSearchException;
+import com.cts.file.search.model.FilesSearchResult;
+import com.cts.file.search.model.FilesSearchResultList;
+import com.cts.file.search.model.SearchValidation;
 import com.cts.file.search.service.MultiWordsFilesSearchService;
-import com.cts.file.search.util.FileSearchUtil;
 
 @RestController
+@Api(value = "Multi-Words-Search")
 public class MultiWordsFilesSearchController
 {
 	private static final Logger logger = Logger.getLogger(MultiWordsFilesSearchController.class);
-
-	FileSearchUtil fileSearchUtil = new FileSearchUtil();
 
 	@Value("${dir.filepath}")
 	protected String dirPath;
 
 	@Autowired
+	@Qualifier("multiWordsFilesSearchService")
 	private MultiWordsFilesSearchService multiWordsFilesSearchService;
+
+
+	@SuppressWarnings("rawtypes")
+	@CrossOrigin
+	@ApiOperation(value = "Search words in the files and return the matched files", response = FilesSearchResultList.class)
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "List of files (File Name and File Location) matched", response = FilesSearchResultList.class),
+			@ApiResponse(code = 500, message = "Error Fetching", response = MultiWordsFilesSearchException.class),
+			@ApiResponse(code = 400, message = "Validation Failed", response = SearchValidation.class) })
 
 	/**
 	 * Create set of all matched files where all words are present at least once.
 
-	 * @param multiwords
+	 * @param multiwords entered by client of rest service
 
-	 * @return List of all matched Files and combined zip file location
+	 * @return Count and Path of matched files
 
 	 * @throws IOException
 
 	 */
-	@RequestMapping("/files_search")
-	public FilesSearchList searchFilesWithMultiWords(@RequestParam(value="multiwords") String multiwords) throws IOException
+	@RequestMapping(value = "/files_search",method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE,MediaType.APPLICATION_XML_VALUE})
+
+	public ResponseEntity<?> searchFilesWithMultiWords(@ApiParam(value = "Please enter words delimited by space with each other!!", required = false) 
+	@RequestParam(value = "multiwords", required = false) String multiwordsParams,
+	@ApiParam(value = "Please select option for case sensitivity. Allowed values are Y or y for yes and N or n for No", required = false, 
+	defaultValue = "Y", allowableValues = "Y,N") @RequestParam(value = "casesensitive", required = false) String caseSensitiveSearch) throws Exception
 	{
-		logger.info("multiwords for files search"+ multiwords);
-		String userMessage = "All Matched files are placed in a zip file @  " + dirPath.toString();
-		Set<Path> matchedFilesPathSet = new HashSet<Path>();
+		logger.info("multiwords for files search"+ multiwordsParams);
+
+
+		if (StringUtils.isBlank(multiwordsParams))
+			return new ResponseEntity<SearchValidation>(
+					new SearchValidation("Please enter one word at least !!"),
+					HttpStatus.BAD_REQUEST);
+
+		//Setting additional preferences for search
+		if (!StringUtils.isEmpty(caseSensitiveSearch) && (caseSensitiveSearch.trim().equalsIgnoreCase("Y")
+				|| caseSensitiveSearch.trim().equalsIgnoreCase("N")))
+			multiWordsFilesSearchService.setCaseSensitiveSearch(caseSensitiveSearch.trim().equalsIgnoreCase("Y") ? true : false);
+
+
+		String[] multiwords = multiwordsParams.replaceAll("\\s{2,}", " ").trim().split(" ");
+
+		FilesSearchResultList<FilesSearchResult> matchdedFilesList ;
 
 		try {
-			matchedFilesPathSet = multiWordsFilesSearchService.searchFilesWithMultiWords(multiwords,dirPath);			
-		} catch (Exception e) {
-			logger.info("Exception occured during files search"+e);
-		}
-		logger.debug("MatchedFilesPath Set"+ matchedFilesPathSet);
 
-		if(matchedFilesPathSet.size()==0) {
-			
-			return new FilesSearchList("There is no file with multiple words / search w/o words",matchedFilesPathSet.toString());
+			matchdedFilesList = multiWordsFilesSearchService.searchFilesWithMultiWords(multiwords,dirPath);
+			return new ResponseEntity<FilesSearchResultList>(matchdedFilesList, HttpStatus.OK);
 
-		}else {
-			try {			
-				fileSearchUtil.zipFileFromMatchedFiles(matchedFilesPathSet);			
-			} catch (Throwable e) {
-				logger.info("Exception occured during zip creation"+e);
-			}
+		} catch (Exception ex) {
+
+			return new ResponseEntity<MultiWordsFilesSearchException>(new MultiWordsFilesSearchException("", ex), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		return new FilesSearchList(userMessage,matchedFilesPathSet.toString());
 	}
 
 }

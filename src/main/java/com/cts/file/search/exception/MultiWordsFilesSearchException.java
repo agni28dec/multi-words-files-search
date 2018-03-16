@@ -1,37 +1,85 @@
 package com.cts.file.search.exception;
 
-public class MultiWordsFilesSearchException extends Exception {
+import java.util.UUID;
+
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@XmlRootElement(name = "ERROR")
+@ApiModel(value="ERROR")
+@XmlType(propOrder = { "uniqueErrorId", "errorMessage", "stackTrace" })
+@JsonPropertyOrder({ "id", "message", "errorStackTrace" })
+public class MultiWordsFilesSearchException {
+
+	@ApiModelProperty(required = true)
+	@JsonProperty("id")
+	private String uniqueErrorId;
+
+	@JsonProperty("errorStackTrace")
+	private String stackTrace;
+
+	@JsonProperty("message")
+	private String errorMessage;
 
 
-	private static final long	serialVersionUID	= 7267672899607797813L;
+	@JsonIgnore
+	private Exception exception;
 
-	/**
-	 * Default constructor
-	 */
 	public MultiWordsFilesSearchException() {
 		super();
 	}
 
-	/**
-	 * Creates an instance of XDomainException
-	 * 
-	 * @param errorMessage The error message to be displayed
-	 */
-	public MultiWordsFilesSearchException(String errorMessage) {
-		super(errorMessage);
+	public MultiWordsFilesSearchException(Exception exception) {
+		super();
+		this.exception = exception;
+		setUniqueErrorId(UUID.randomUUID().toString());
+		setStackTrace(ExceptionUtils.getStackTrace(exception));
 	}
 
-	/**
-	 * Creates an instance of XDomainException with error message and throwable as input
-	 * 
-	 * @param errorMessage The error message to be displayed
-	 * 
-	 * @param exception The throwable object
-	 */
-	public MultiWordsFilesSearchException(String errorMessage, Throwable exception) {
-		super(errorMessage, exception);
+	public MultiWordsFilesSearchException(String errorMessage, Exception exception) {
+		super();
+		this.exception = exception;
+		setUniqueErrorId(UUID.randomUUID().toString());
+		setStackTrace(ExceptionUtils.getStackTrace(exception));
+		this.errorMessage = errorMessage;
 	}
 
+	public String getUniqueErrorId() {
+		return uniqueErrorId;
+	}
+
+	@XmlElement(name = "id")
+	public void setUniqueErrorId(String uniqueErrorId) {
+		this.uniqueErrorId = uniqueErrorId;
+	}
+
+	public String getStackTrace() {
+		return stackTrace;
+	}
+
+	@XmlElement(name = "stack-trace")
+	public void setStackTrace(String stackTrace) {
+		this.stackTrace = stackTrace;
+	}
+
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
+	@XmlElement(name = "message")
+	public void setErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
+	}
 
 
 }
